@@ -1,0 +1,38 @@
+---
+import type { Course } from '../types';
+import { Image } from 'astro:assets';
+
+interface Props {
+  courses: Course[];
+}
+const { courses } = Astro.props;
+---
+
+<div id="gallery-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-12">
+    {courses.map(course => (
+        <a 
+            href={`/course/${course._id}`} 
+            class="course-item group block bg-white p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            data-title={course.title}
+            data-tags={course.tags?.join(',') || ''}
+        >
+            <div class="w-full bg-gray-100 rounded-md overflow-hidden mb-4">
+                {course.firstBookCoverUrl && (
+                    <Image 
+                        src={course.firstBookCoverUrl}
+                        alt={`Cover for ${course.title}`}
+                        width={400}  
+                        height={500}
+                        format="webp"
+                        quality={80}
+                        class="w-full h-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105" 
+                    />
+                )}
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-gray-900 tracking-tight">{course.title}</h3>
+                <p class="text-sm text-gray-500 mt-1">{course.tags?.slice(0, 2).join(', ')}</p>
+            </div>
+        </a>
+    ))}
+</div>

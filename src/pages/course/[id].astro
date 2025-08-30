@@ -1,0 +1,72 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { getCourses, getCourseById } from '../../lib/sanity';
+import type { Course } from '../../types';
+import { Image } from 'astro:assets';
+
+export async function getStaticPaths() {
+  const courses: Course[] = await getCourses();
+  return courses.map(course => ({
+    params: { id: course._id },
+  }));
+}
+
+const { id } = Astro.params;
+const course: Course | null = await getCourseById(id!);
+
+if (!course) {
+  return Astro.redirect('/404');
+}
+---
+
+<MainLayout title={course.title}>
+    <header class="mb-12">
+        <a href="/" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">&larr; All Courses</a>
+        <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900">{course.title}</h1>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-3 lg:gap-x-16">
+        <aside class="lg:col-span-1 mb-12 lg:mb-0">
+            <div class="sticky top-10">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3">About this course</h2>
+                <article class="prose prose-base text-gray-600">
+                    <p>{course.description}</p>
+                </article>
+            </div>
+        </aside>
+        <div class="lg:col-span-2">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-gray-500">Reading List</h2>
+                <button class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">
+                    Download All
+                </button>
+            </div>
+            <div class="space-y-4">
+                {course.books && course.books.map(book => (
+                    <div class="bg-white border border-gray-200 p-4 rounded-xl flex items-center shadow-sm transition-shadow hover:shadow-md">
+                        <div class="w-16 h-24 flex-shrink-0 mr-5">
+                            <Image 
+                                src={book.coverUrl} 
+                                alt={`Cover for ${book.title}`} 
+                                width={64}
+                                height={96}
+                                format="webp"
+                                quality="mid"
+                                class="w-full h-full object-cover rounded-md shadow-lg" 
+                            />
+                        </div>
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-md text-gray-800">{book.title}</h3>
+                            <p class="text-sm text-gray-500 mt-1">{book.author}</p>
+                        </div>
+                        <div class="ml-4 flex-shrink-0">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg transition-colors text-sm">
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </main>
+</MainLayout>

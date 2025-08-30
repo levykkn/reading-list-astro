@@ -1,5 +1,16 @@
-// @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig } from "astro/config";
+import tailwindcss from "@tailwindcss/vite";
+import node from "@astrojs/node";
+import clerk from "@clerk/astro";
 
-// https://astro.build/config
-export default defineConfig({});
+export default defineConfig({
+  vite: {
+    plugins: [tailwindcss()],
+  },
+  image: {
+    remotePatterns: [{ protocol: "https", hostname: "cdn.sanity.io" }],
+  },
+  integrations: [clerk()],
+  adapter: node({ mode: "standalone" }),
+  output: "server",
+});

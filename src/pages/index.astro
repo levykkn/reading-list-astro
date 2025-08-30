@@ -1,16 +1,126 @@
 ---
+import MainLayout from '../layouts/MainLayout.astro';
+import CourseFilter from '../components/CourseFilter.astro';
+import { getCourses } from '../lib/sanity';
+import type { Course } from '../types';
 
+const courses: Course[] = await getCourses();
+const allTags = [...new Set(courses.flatMap(course => course.tags || []))].sort();
+const maxBooks = Math.max(...courses.map(c => c.bookCount || 0), 10);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout title="Reading Lists | A Curated Collection" layout="full">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-x-12">
+        <!-- Filter Sidebar -->
+        <aside class="lg:col-span-1 mb-12 lg:mb-0">
+            <div class="sticky top-24">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Filters</h2>
+                    <button id="clear-filters-btn" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Clear All</button>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- Search Input -->
+                    <div class="filter-section border-b border-gray-200 pb-6">
+                        <label for="search-input" class="block text-sm font-medium text-gray-700 mb-2">Search by title</label>
+                        <input type="search" id="search-input" placeholder="e.g., French History" class="w-full p-3 text-base bg-white border border-gray-300 rounded-lg shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent transition">
+                    </div>
+
+                    <!-- Tags Filter -->
+                    <div class="filter-section border-b border-gray-200 pb-6">
+                        <h3 class="block text-sm font-medium text-gray-700 mb-3">Filter by tag</h3>
+                        <div class="max-h-48 overflow-y-auto pr-2">
+                            <div id="tags-container" class="space-y-2">
+                                {allTags.map(tag => (
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="checkbox" class="tag-checkbox h-4 w-4 rounded border-gray-300 text-gray-800 focus:ring-gray-800" data-tag={tag}>
+                                        <span class="text-gray-700">{tag}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Book Count Filter -->
+                    <div class="filter-section">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="block text-sm font-medium text-gray-700">Max books</h3>
+                            <span id="book-count-value" class="text-sm font-semibold text-gray-900">{maxBooks}+</span>
+                        </div>
+                        <input type="range" id="book-count-slider" min="1" max={maxBooks} value={maxBooks} class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Course Grid -->
+        <main class="lg:col-span-2">
+            <CourseFilter courses={courses} />
+        </main>
+    </div>
+</MainLayout>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search-input');
+    const tagsContainer = document.getElementById('tags-container');
+    const bookCountSlider = document.getElementById('book-count-slider');
+    const bookCountValue = document.getElementById('book-count-value');
+    const clearFiltersBtn = document.getElementById('clear-filters-btn');
+    const courseItems = document.querySelectorAll('.course-item');
+
+    if (!searchInput || !tagsContainer || !bookCountSlider || !clearFiltersBtn) {
+      console.error("Filter controls not found on the page.");
+      return;
+    }
+
+    const maxBooks = parseInt(bookCountSlider.max, 10);
+    
+    function filterCourses() {
+      const searchQuery = searchInput.value.toLowerCase().trim();
+      const activeTags = Array.from(tagsContainer.querySelectorAll('.tag-checkbox:checked')).map(checkbox => checkbox.dataset.tag);
+      const selectedMaxBooks = parseInt(bookCountSlider.value, 10);
+
+      courseItems.forEach(item => {
+        const course = item;
+        const title = (course.dataset.title || '').toLowerCase();
+        const tags = (course.dataset.tags || '').split(',');
+        const bookCount = parseInt(course.dataset.bookCount || '0', 10);
+        
+        const matchesSearch = title.includes(searchQuery);
+        const matchesTags = activeTags.length === 0 || activeTags.every(activeTag => tags.includes(activeTag));
+        const matchesBookCount = selectedMaxBooks === maxBooks ? true : bookCount <= selectedMaxBooks;
+
+        if (matchesSearch && matchesTags && matchesBookCount) {
+          course.style.display = 'block';
+        } else {
+          course.style.display = 'none';
+        }
+      });
+    }
+
+    function clearFilters() {
+        searchInput.value = '';
+        tagsContainer.querySelectorAll('.tag-checkbox:checked').forEach(checkbox => checkbox.checked = false);
+        bookCountSlider.value = maxBooks;
+        bookCountValue.textContent = `${maxBooks}+`;
+        filterCourses();
+    }
+
+    function updateBookCountDisplay() {
+        const value = bookCountSlider.value;
+        bookCountValue.textContent = value == maxBooks ? `${value}+` : value;
+    }
+
+    searchInput.addEventListener('input', filterCourses);
+    tagsContainer.addEventListener('change', filterCourses);
+    bookCountSlider.addEventListener('input', () => {
+        updateBookCountDisplay();
+        filterCourses();
+    });
+    clearFiltersBtn.addEventListener('click', clearFilters);
+
+    updateBookCountDisplay();
+  });
+</script>
+

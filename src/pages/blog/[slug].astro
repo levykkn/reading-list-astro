@@ -1,0 +1,64 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { getPosts, getPostBySlug, urlFor } from '../../lib/sanity';
+import type { Post } from '../../types';
+import { Image } from 'astro:assets';
+import { PortableText } from 'astro-portabletext';
+import { format } from 'date-fns';
+
+export async function getStaticPaths() {
+  const posts: Post[] = await getPosts();
+  return posts.map(post => ({
+    params: { slug: post.slug.current },
+  }));
+}
+
+const { slug } = Astro.params;
+const post: Post | null = await getPostBySlug(slug!);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+---
+
+<MainLayout title={post.title}>
+    <article>
+        <header class="mb-12 text-center">
+             <a href="/blog" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">&larr; Back to Blog</a>
+            <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900">{post.title}</h1>
+            <div class="flex items-center justify-center mt-6">
+                {post.author.picture && (
+                     <Image 
+                        src={urlFor(post.author.picture).url()}
+                        alt={`Picture of ${post.author.name}`}
+                        width={48}  
+                        height={48}
+                        format="webp"
+                        class="w-12 h-12 rounded-full mr-4 object-cover" 
+                    />
+                )}
+                <div>
+                    <p class="text-base font-medium text-gray-900">{post.author.name}</p>
+                    <p class="text-base text-gray-500">{format(new Date(post.publishedAt), 'MMMM d, yyyy')}</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="mb-12">
+            <Image 
+                src={urlFor(post.mainImage).url()}
+                alt={`Hero image for ${post.title}`}
+                width={1200}
+                height={600}
+                format="webp"
+                quality="max"
+                class="w-full h-auto max-h-[500px] object-cover rounded-2xl shadow-lg"
+            />
+        </div>
+
+        <main class="prose prose-lg mx-auto">
+             <PortableText value={post.body} />
+        </main>
+    </article>
+</MainLayout>
+
