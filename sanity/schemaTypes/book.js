@@ -23,5 +23,10 @@ export default {
       title: 'Google Books ID',
       type: 'string',
     },
+    {
+      name: 'textContent',
+      title: 'Text Content',
+      type: 'text',
+    },
   ],
 }

@@ -1,5 +1,5 @@
 import { createClient } from "@sanity/client";
-import type { Course, Post } from "../types"; 
+import type { Book, Course, Post } from "../types"; 
 import imageUrlBuilder from '@sanity/image-url';
 
 const client = createClient({
@@ -39,6 +39,17 @@ export async function getCourseById(id: string): Promise<Course | null> {
   }`;
   const params = { id };
   return await client.fetch(query, params);
+}
+
+export async function getBookById(id: string): Promise<Book | null> {
+    const query = `*[_type == "book" && _id == $id][0]{
+        _id,
+        title,
+        author,
+        textContent
+    }`;
+    const params = { id };
+    return await client.fetch(query, params);
 }
 
 export async function getPosts(): Promise<Post[]> {

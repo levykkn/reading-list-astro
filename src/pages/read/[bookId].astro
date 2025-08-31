@@ -1,0 +1,79 @@
+---
+import { getBookById } from '../../lib/sanity';
+import type { Book } from '../../types';
+
+const { bookId } = Astro.params;
+const book: Book | null = await getBookById(bookId!);
+
+if (!book || !book.textContent) {
+  return Astro.redirect('/404');
+}
+---
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{book.title} by {book.author}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #FDFBF7;
+            font-family: 'Lora', serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .reader-container {
+            max-width: 800px;
+            margin: 4rem auto;
+            padding: 2rem;
+        }
+        .reader-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 1.5rem;
+        }
+        .reader-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .reader-author {
+            font-size: 1.2rem;
+            color: #666;
+            font-style: italic;
+        }
+        .reader-content {
+            /* This makes the text stretch to fill the container width */
+            text-align: justify;
+            /* This respects the line breaks from your Sanity content field */
+            white-space: pre-line;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: #555;
+            text-decoration: none;
+            font-family: sans-serif;
+            font-size: 0.9rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="reader-container">
+        <a href="javascript:history.back()" class="back-link">&larr; Back to Reading List</a>
+        <header class="reader-header">
+            <h1 class="reader-title">{book.title}</h1>
+            <p class="reader-author">{book.author}</p>
+        </header>
+        <main class="reader-content">
+            {book.textContent}
+        </main>
+    </div>
+</body>
+</html>
