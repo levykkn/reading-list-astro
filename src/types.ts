@@ -3,6 +3,7 @@ export interface Book {
   title: string;
   author: string;
   coverUrl: string;
+  textContent?: string;
 }
 
 export interface Course {
